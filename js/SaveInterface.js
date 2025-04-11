@@ -264,6 +264,13 @@ class SaveInterface {
         }, 500);
     }
 
+    getProjectData() {
+        if (this.activity && typeof this.activity.prepareExport === "function") {
+            return this.activity.prepareExport();
+        }
+        return null;
+    }
+
     /**
      * Save MIDI file.
      *
