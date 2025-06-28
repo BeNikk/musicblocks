@@ -1042,5 +1042,17 @@
         window.addEventListener("resize", togglePlayOnlyMode);
       });
     </script>
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const blocks = localStorage.getItem("musicblocks_blocks");
+        if (blocks) {
+          const blocksJson = JSON.parse(blocks);
+          activity.blocks.loadNewBlocks(blocksJson);
+          activity.textMsg(_("Blocks loaded"));
+          localStorage.removeItem("musicblocks_blocks");
+        }
+        
+      });
+    </script>
   </body>
 </html>

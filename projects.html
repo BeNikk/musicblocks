@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MusicBlocks Planet Projects</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f9f9f9;
+      }
+      header {
+        background: #4caf50;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+      }
+      .container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 1rem;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+      }
+      .card {
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s ease;
+      }
+      .card:hover {
+        transform: scale(1.02);
+      }
+      .card img {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        background: #ddd;
+      }
+      .card-content {
+        flex: 1;
+        padding: 0.75rem;
+        display: flex;
+        flex-direction: column;
+      }
+      .card-title {
+        font-size: 1.1rem;
+        margin: 0.5rem 0 0.25rem;
+        flex-grow: 0;
+      }
+      .card-desc {
+        font-size: 0.9rem;
+        color: #555;
+        flex-grow: 1;
+      }
+      .card-actions {
+        margin-top: 0.75rem;
+        text-align: center;
+      }
+      .btn {
+        background: #4caf50;
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        text-decoration: none;
+        border-radius: 3px;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+      .btn:hover {
+        background: #43a047;
+      }
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        font-size: 1.2rem;
+        color: #666;
+      }
+      @media (max-width: 600px) {
+        .card img {
+          height: 100px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Explore MusicBlocks Projects</h1>
+    </header>
+
+    <div class="container">
+      <div id="loading" class="loading">Loading projects...</div>
+      <div id="cards" class="cards" style="display: none">
+        <!-- Cards will be injected here -->
+      </div>
+    </div>
+
+    <script>
+      async function loadRepos() {
+        try {
+          const res = await fetch(
+            "https://api.github.com/orgs/musicblocks-projects/repos?per_page=100"
+          );
+          if (!res.ok) {
+            throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
+          }
+
+          const repos = await res.json();
+
+          if (!Array.isArray(repos)) {
+            console.error("Unexpected response format:", repos);
+            document.getElementById("loading").innerText =
+              "Failed to load projects. Please try again later.";
+            return;
+          }
+
+          const cards = document.getElementById("cards");
+          const loading = document.getElementById("loading");
+          loading.style.display = "none";
+          cards.style.display = "grid";
+
+          repos.forEach((repo) => {
+            const card = document.createElement("div");
+            card.className = "card";
+
+            const img = document.createElement("img");
+            img.src = "./planet/images/mbgraphic.png";
+            img.alt = repo.name;
+
+            const content = document.createElement("div");
+            content.className = "card-content";
+
+            const title = document.createElement("h2");
+            title.className = "card-title";
+            title.textContent = repo.name;
+
+            const desc = document.createElement("p");
+            desc.className = "card-desc";
+            desc.textContent = repo.description || "No description";
+
+            const actions = document.createElement("div");
+            actions.className = "card-actions";
+            const btn = document.createElement("a");
+            btn.className = "btn";
+            btn.textContent = "Open in MusicBlocks";
+            // btn.href = `https://musicblocks.xyz/planet.html?repo=${encodeURIComponent(repo.full_name)}`;
+            // btn.target = '_blank';
+            btn.addEventListener("click", async (e) => {
+              e.preventDefault();
+              try {
+                const apiRes = await fetch(`http://localhost:3000/api/github/fork`,{
+                  method:"POST",
+                  headers:{
+                    "Content-Type":"application/json",
+                  },
+                  body:JSON.stringify({repositoryName:repo.name})
+                });
+                if (!apiRes.ok) throw new Error("API error");
+                const data = await apiRes.json();
+                alert(data.repoName);
+                localStorage.setItem("musicblocks_blocks", JSON.stringify(data.projectData));
+                localStorage.setItem("repoName", data.repoName);
+                localStorage.setItem("key", data.key);
+
+                window.location.href = "index.html";
+              } catch (err) {
+                alert("Failed to load project blocks.");
+                console.error(err);
+              }
+            });
+
+            actions.appendChild(btn);
+            content.append(title, desc, actions);
+            card.append(img, content);
+            cards.appendChild(card);
+          });
+        } catch (error) {
+          console.error("Failed to fetch repos:", error);
+          document.getElementById("loading").innerText =
+            "Error loading projects. Please try again later.";
+        }
+      }
+
+      loadRepos();
+    </script>
+  </body>
+</html>
