@@ -94,6 +94,20 @@
   <body>
     <header>
       <h1>Explore MusicBlocks Projects</h1>
+      <input
+        type="text"
+        id="search"
+        placeholder="Search repositories..."
+        style="
+          margin-top: 1rem;
+          padding: 0.5rem;
+          width: 80%;
+          max-width: 400px;
+          font-size: 1rem;
+          border-radius: 4px;
+          border: 1px solid #ccc;
+        "
+      />
     </header>
 
     <div class="container">
@@ -104,6 +118,7 @@
     </div>
 
     <script>
+      let allRepos = [];
       async function loadRepos() {
         try {
           const res = await fetch(
@@ -121,74 +136,87 @@
               "Failed to load projects. Please try again later.";
             return;
           }
-
-          const cards = document.getElementById("cards");
-          const loading = document.getElementById("loading");
-          loading.style.display = "none";
-          cards.style.display = "grid";
-
-          repos.forEach((repo) => {
-            const card = document.createElement("div");
-            card.className = "card";
-
-            const img = document.createElement("img");
-            img.src = "./planet/images/mbgraphic.png";
-            img.alt = repo.name;
-
-            const content = document.createElement("div");
-            content.className = "card-content";
-
-            const title = document.createElement("h2");
-            title.className = "card-title";
-            title.textContent = repo.name;
-
-            const desc = document.createElement("p");
-            desc.className = "card-desc";
-            desc.textContent = repo.description || "No description";
-
-            const actions = document.createElement("div");
-            actions.className = "card-actions";
-            const btn = document.createElement("a");
-            btn.className = "btn";
-            btn.textContent = "Open in MusicBlocks";
-            // btn.href = `https://musicblocks.xyz/planet.html?repo=${encodeURIComponent(repo.full_name)}`;
-            // btn.target = '_blank';
-            btn.addEventListener("click", async (e) => {
-              e.preventDefault();
-              try {
-                const apiRes = await fetch(`http://localhost:3000/api/github/fork`,{
-                  method:"POST",
-                  headers:{
-                    "Content-Type":"application/json",
-                  },
-                  body:JSON.stringify({repositoryName:repo.name})
-                });
-                if (!apiRes.ok) throw new Error("API error");
-                const data = await apiRes.json();
-                alert(data.repoName);
-                localStorage.setItem("musicblocks_blocks", JSON.stringify(data.projectData));
-                localStorage.setItem("repoName", data.repoName);
-                localStorage.setItem("key", data.key);
-
-                window.location.href = "index.html";
-              } catch (err) {
-                alert("Failed to load project blocks.");
-                console.error(err);
-              }
-            });
-
-            actions.appendChild(btn);
-            content.append(title, desc, actions);
-            card.append(img, content);
-            cards.appendChild(card);
-          });
+          allRepos = repos;
+          renderCards(repos);
         } catch (error) {
           console.error("Failed to fetch repos:", error);
           document.getElementById("loading").innerText =
             "Error loading projects. Please try again later.";
         }
       }
+      function renderCards(repos) {
+        const cards = document.getElementById("cards");
+        const loading = document.getElementById("loading");
+        loading.style.display = "none";
+        cards.style.display = "grid";
+        cards.innerHTML = ""; //clearing previous cards
 
+        repos.forEach((repo) => {
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const img = document.createElement("img");
+          img.src = "./planet/images/mbgraphic.png";
+          img.alt = repo.name;
+
+          const content = document.createElement("div");
+          content.className = "card-content";
+
+          const title = document.createElement("h2");
+          title.className = "card-title";
+          title.textContent = repo.name;
+
+          const desc = document.createElement("p");
+          desc.className = "card-desc";
+          desc.textContent = repo.description || "No description";
+
+          const actions = document.createElement("div");
+          actions.className = "card-actions";
+          const btn = document.createElement("a");
+          btn.className = "btn";
+          btn.textContent = "Open in MusicBlocks";
+          // btn.href = `https://musicblocks.xyz/planet.html?repo=${encodeURIComponent(repo.full_name)}`;
+          // btn.target = '_blank';
+          btn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            try {
+              const apiRes = await fetch(`http://localhost:3000/api/github/fork`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ repositoryName: repo.name })
+              });
+              if (!apiRes.ok) throw new Error("API error");
+              const data = await apiRes.json();
+              alert(data.repoName);
+              localStorage.setItem("musicblocks_blocks", JSON.stringify(data.projectData));
+              localStorage.setItem("repoName", data.repoName);
+              localStorage.setItem("key", data.key);
+
+              window.location.href = "index.html";
+            } catch (err) {
+              alert("Failed to load project blocks.");
+              console.error(err);
+            }
+          });
+
+          actions.appendChild(btn);
+          content.append(title, desc, actions);
+          card.append(img, content);
+          cards.appendChild(card);
+        });
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = document.getElementById("search");
+        if (searchInput) {
+          searchInput.addEventListener("input", (e) => {
+            const value = e.target.value.toLowerCase();
+            const filtered = allRepos.filter((repo) => repo.name.toLowerCase().includes(value));
+            renderCards(filtered);
+          });
+        }
+      });
       loadRepos();
     </script>
   </body>
